@@ -1,7 +1,7 @@
 [project]
 name = "ckanext-ddfxls"
 version = "0.0.1"
-description = "A datasgtore dump format for XLS files"
+description = "A datastore dump format for XLS files"
 readme = "README.md"
 authors = [
     {name = "OKFN", email = "info@okfn.org"}
@@ -15,8 +15,16 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
-keywords = [ "CKAN", "excel", "xls", "datastore", "dump", "xlsx", ]
-dependencies = []
+keywords = ["CKAN", "excel", "xls", "datastore", "dump", "xlsx"]
+dependencies = [
+    # use requirements.txt file
+    # "openpyxl>=3,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-ckan",
+]
 
 [project.urls]
 Homepage = "https://github.com/okfn/ckanext-ddfxls"
@@ -24,16 +32,28 @@ Homepage = "https://github.com/okfn/ckanext-ddfxls"
 [project.entry-points."ckan.plugins"]
 ddfxls = "ckanext.ddfxls.plugin:DdfxlsPlugin"
 
-
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["ckanext*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"ckanext.ddfxls" = [
+    "assets/*.js",
+    "assets/*.css",
+    "assets/*.yml",
+    "templates/**/*.html",
+    "public/**/*",
+]
+
 [tool.pytest.ini_options]
 filterwarnings = [
-        "ignore::sqlalchemy.exc.SADeprecationWarning",
-        "ignore::sqlalchemy.exc.SAWarning",
-        "ignore::DeprecationWarning",
+    "ignore::sqlalchemy.exc.SADeprecationWarning",
+    "ignore::sqlalchemy.exc.SAWarning",
+    "ignore::DeprecationWarning",
 ]
 addopts = "--ckan-ini test.ini"
 
@@ -42,4 +62,3 @@ line-length = 127
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
-
