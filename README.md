@@ -1,4 +1,4 @@
-[![Tests](https://github.com/okfn/ckanext-ddfxls/workflows/Tests/badge.svg?branch=main)](https://github.com/okfn/ckanext-ddfxls/actions)
+[![CKAN 2.11 Tests](https://github.com/okfn/ckanext-ddfxls/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/okfn/ckanext-ddfxls/actions/workflows/test.yml)
 
 # ckanext-ddfxls
 
@@ -18,14 +18,13 @@ Compatibility with core CKAN versions:
 | CKAN version    | Compatible?   |
 | --------------- | ------------- |
 | 2.9             | no            |
-| 2.10            | yes           |
+| 2.10            | no            |
 | 2.11            | yes           |
 
 
-Usahge
+## Usage
 
 Add `ddfxls` to the `ckan.plugins` setting in your CKAN config file
-
 
 ## Config settings
 
