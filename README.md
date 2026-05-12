@@ -2,8 +2,10 @@
 
 # ckanext-ddfxls
 
-A datastore dump for XLS files.
+A datastore dump for XLS files.  
+Note: This depends on [CKAN#9345](https://github.com/ckan/ckan/pull/9345) to be merged.  
 
+<img src="/extras/imgs/shot.png" alt="screenshot" width="600">
 
 
 ## Requirements
