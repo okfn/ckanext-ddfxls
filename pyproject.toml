@@ -1,0 +1,45 @@
+[project]
+name = "ckanext-ddfxls"
+version = "0.0.1"
+description = "A datasgtore dump format for XLS files"
+readme = "README.md"
+authors = [
+    {name = "OKFN", email = "info@okfn.org"}
+]
+license = {text = "AGPL"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+keywords = [ "CKAN", "excel", "xls", "datastore", "dump", "xlsx", ]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/okfn/ckanext-ddfxls"
+
+[project.entry-points."ckan.plugins"]
+ddfxls = "ckanext.ddfxls.plugin:DdfxlsPlugin"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+        "ignore::sqlalchemy.exc.SADeprecationWarning",
+        "ignore::sqlalchemy.exc.SAWarning",
+        "ignore::DeprecationWarning",
+]
+addopts = "--ckan-ini test.ini"
+
+[tool.ruff]
+line-length = 127
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+

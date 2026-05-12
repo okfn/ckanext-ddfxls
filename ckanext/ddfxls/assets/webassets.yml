@@ -1,0 +1,14 @@
+# ddfxls-js:
+#   filters: rjsmin
+#   output: ckanext-ddfxls/%(version)s-ddfxls.js
+#   contents:
+#     - js/ddfxls.js
+#   extra:
+#     preload:
+#       - base/main
+
+# ddfxls-css:
+#   filters: cssrewrite
+#   output: ckanext-ddfxls/%(version)s-ddfxls.css
+#   contents:
+#     - css/ddfxls.css
