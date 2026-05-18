@@ -1,4 +1,5 @@
-import ckan.plugins as plugins
+from ckan import plugins
+from ckan.plugins import toolkit
 
 from ckanext.datastore.interfaces import IDatastoreDump
 from ckanext.ddfxls.writers import xlsx_writer
