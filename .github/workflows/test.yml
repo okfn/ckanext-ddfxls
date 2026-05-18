@@ -6,13 +6,19 @@ jobs:
     container:
       # The CKAN version tag of the Solr and Postgres containers should match
       # the one of the container the tests run on.
-      # You can switch this base image with a custom image tailored to your project
-      image: ckan/ckan-dev:2.11
+      # Pinned to master while ckan/ckan#9345 (IDatastoreDump validator) is
+      # unmerged; switch back to a release tag (e.g. 2.12) once it lands.
+      image: ckan/ckan-dev:master
       options: --user root
     services:
       solr:
-        image: ckan/ckan-solr:2.11-solr9
+        image: ckan/ckan-solr:master-solr9
       postgres:
+        # Pinned to :2.11 because :master's init scripts misbehave and
+        # leave the datastore DB without _table_stats / cached row-count
+        # functions. The 2.11 image's init wgets set_permissions.sql
+        # from ckan/ckan dev-v2.11 at first container start, and that
+        # branch already includes the backported _table_stats schema.
         image: ckan/ckan-postgres-dev:2.11
         env:
           POSTGRES_USER: postgres
@@ -20,7 +26,10 @@ jobs:
           POSTGRES_DB: postgres
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
-          image: redis:3
+          # CKAN master / RQ requires a modern Redis. The default
+          # `redis:3` image rejects HSET commands that the current
+          # redis-py/RQ pipeline issues.
+          image: redis:7
 
     env:
       CKAN_SQLALCHEMY_URL: postgresql://ckan_default:pass@postgres/ckan_test
@@ -31,6 +40,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    # Temporary: until ckan/ckan#9345 is merged, run tests against the
+    # PR branch so the IDatastoreDump validator API is available.
+    - name: Use unmerged ckan/ckan#9345 (IDatastoreDump validator)
+      run: |
+        git config --global --add safe.directory /srv/app/src/ckan
+        cd /srv/app/src/ckan
+        git fetch --depth 1 https://github.com/avdata99/ckan.git idatastore_formats
+        git checkout FETCH_HEAD
+        # Pick up any requirements added on the PR branch since the
+        # ckan-dev:master image was built.
+        pip install -r requirements.txt
+        pip install -e .
     - name: Install requirements
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
       run: |
@@ -38,11 +59,80 @@ jobs:
         pip install -e .[dev]
     - name: Setup extension
       # Extra initialization steps
+      env:
+        # datastore_write is the owner of the datastore_test database
+        # and has a known, working password (the same one CKAN itself
+        # uses to connect — see CKAN_DATASTORE_WRITE_URL above).
+        # ckan-postgres-dev's postgres superuser password is not
+        # honored reliably in GH Actions service containers, so we
+        # bootstrap the schema as the DB owner instead, which avoids
+        # needing superuser at all.
+        PGPASSWORD: pass
       run: |
         # Replace default path to CKAN core config file with the one on the container
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
 
         ckan -c test.ini db init
+
+        # ckan-dev:master ships without postgres-client; install it.
+        apt-get update && apt-get install -y --no-install-recommends postgresql-client
+
+        # The postgres image's own init script (02_datastore_permissions.sh)
+        # is supposed to apply set_permissions.sql at first container
+        # start, but it doesn't reliably do so in GH Actions service
+        # containers. Apply the minimal datastore schema ourselves so
+        # `_table_stats` and `cached_table_row_count` exist for the
+        # validator path. These are all the user-defined objects the
+        # IDatastoreDump validator relies on; the GRANT/REVOKE parts
+        # of set_permissions.sql aren't needed for tests because the
+        # ckan-postgres-dev image already created the users.
+        psql -h postgres -U datastore_write -d datastore_test --set ON_ERROR_STOP=1 <<'SQL'
+        CREATE TABLE IF NOT EXISTS "_table_stats" (
+            "resource_id" name PRIMARY KEY,
+            "stats" jsonb NOT NULL
+        );
+
+        CREATE OR REPLACE FUNCTION update_cached_table_row_count(table_name name)
+            RETURNS BIGINT
+        AS $body$
+            DECLARE
+                row_count BIGINT;
+            BEGIN
+                EXECUTE format('SELECT count(*) FROM public.%I', table_name)
+                    INTO row_count;
+                INSERT INTO "_table_stats"
+                    VALUES (table_name, jsonb_build_object('rows', row_count))
+                    ON CONFLICT ("resource_id") DO UPDATE SET "stats" =
+                        jsonb_set("_table_stats"."stats", array['rows'], to_jsonb(row_count));
+                RETURN row_count;
+            END;
+        $body$ LANGUAGE plpgsql;
+
+        CREATE OR REPLACE FUNCTION cached_table_row_count(table_name name)
+            RETURNS BIGINT
+        AS $body$
+            DECLARE
+                row_count BIGINT;
+            BEGIN
+                SELECT stats -> 'rows' INTO row_count FROM "_table_stats"
+                    WHERE "resource_id" = table_name;
+                IF row_count IS NULL THEN
+                    SELECT update_cached_table_row_count(table_name) INTO row_count;
+                END IF;
+                RETURN row_count;
+            END;
+        $body$ LANGUAGE plpgsql;
+
+        CREATE OR REPLACE FUNCTION update_table_stats(table_name name)
+            RETURNS BOOL
+        AS $body$
+            BEGIN
+                EXECUTE format('ANALYZE public.%I', table_name);
+                PERFORM cached_table_row_count(table_name);
+                RETURN TRUE;
+            END;
+        $body$ LANGUAGE plpgsql;
+        SQL
     - name: Run tests
       run: pytest --ckan-ini=test.ini --cov=ckanext.ddfxls --disable-warnings ckanext/ddfxls
 

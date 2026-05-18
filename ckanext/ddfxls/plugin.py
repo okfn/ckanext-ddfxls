@@ -1,7 +1,7 @@
 from ckan import plugins
 from ckan.plugins import toolkit
-
 from ckanext.datastore.interfaces import IDatastoreDump
+from ckanext.ddfxls.validators import xlsx_validate
 from ckanext.ddfxls.writers import xlsx_writer
 
 
@@ -19,5 +19,6 @@ class DdfxlsPlugin(plugins.SingletonPlugin):
                 "records_format": "objects",
                 "content_type": ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
                 "file_extension": "xlsx",
+                "validate": xlsx_validate,
             }
         }

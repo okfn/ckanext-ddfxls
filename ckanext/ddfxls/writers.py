@@ -6,6 +6,7 @@ from io import BytesIO
 import openpyxl
 from openpyxl.utils import get_column_letter
 
+
 @contextmanager
 def xlsx_writer(fields: list[dict[str, Any]], bom: bool = False):
     """Context manager for writing XLSX data to file
