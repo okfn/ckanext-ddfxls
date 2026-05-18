@@ -14,6 +14,7 @@ class DdfxlsPlugin(plugins.SingletonPlugin):
         """Register XLSX format for datastore exports"""
         return {
             "xlsx": {
+                "label": toolkit._('Excel'),
                 "writer_factory": xlsx_writer,
                 "records_format": "objects",
                 "content_type": ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
