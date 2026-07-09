@@ -25,30 +25,26 @@ def xlsx_writer(fields: list[dict[str, Any]], bom: bool = False):
         col_letter = get_column_letter(idx)
         worksheet[f'{col_letter}1'] = field['id']
 
-    yield XLSXWriter(output, workbook, worksheet, len(fields))
+    yield XLSXWriter(output, workbook, worksheet, fields)
 
 
 class XLSXWriter(object):
     def __init__(self, output: BytesIO, workbook: Any,
-                 worksheet: Any, num_fields: int):
+                 worksheet: Any, fields: list[dict[str, Any]]):
         self.output = output
         self.workbook = workbook
         self.worksheet = worksheet
-        self.num_fields = num_fields
+        self.fields = fields
         self.current_row = 2  # Start after header row
 
     def write_records(self, records: list[dict[str, Any]]) -> bytes:
         """Write records to the XLSX worksheet"""
 
         for record in records:
-            for idx in range(self.num_fields):
-                col_letter = get_column_letter(idx + 1)
-                # Get the field name from the first record if available
-                field_names = list(record.keys()) if record else []
-                if idx < len(field_names):
-                    field_name = field_names[idx]
-                    value = record.get(field_name, '')
-                    self.worksheet[f'{col_letter}{self.current_row}'] = value
+            for idx, field in enumerate(self.fields, 1):
+                col_letter = get_column_letter(idx)
+                value = record.get(field['id'], '')
+                self.worksheet[f'{col_letter}{self.current_row}'] = value
             self.current_row += 1
 
         return b''  # No incremental output for XLSX
