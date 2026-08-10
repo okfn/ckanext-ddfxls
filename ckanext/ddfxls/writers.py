@@ -4,6 +4,7 @@ from typing import Any
 from contextlib import contextmanager
 from io import BytesIO
 import openpyxl
+from openpyxl.cell.cell import TYPE_STRING
 from openpyxl.utils import get_column_letter
 
 
@@ -42,9 +43,13 @@ class XLSXWriter(object):
 
         for record in records:
             for idx, field in enumerate(self.fields, 1):
-                col_letter = get_column_letter(idx)
+                cell = self.worksheet.cell(row=self.current_row, column=idx)
                 value = record.get(field['id'], '')
-                self.worksheet[f'{col_letter}{self.current_row}'] = value
+                cell.value = value
+                if isinstance(value, str) and value.startswith('='):
+                    # openpyxl stores '='-prefixed strings as live formulas;
+                    # force text to prevent formula injection
+                    cell.data_type = TYPE_STRING
             self.current_row += 1
 
         return b''  # No incremental output for XLSX
