@@ -51,9 +51,12 @@ namespaces = true
 
 [tool.pytest.ini_options]
 filterwarnings = [
-    "ignore::sqlalchemy.exc.SADeprecationWarning",
-    "ignore::sqlalchemy.exc.SAWarning",
+    # Silence third-party deprecation noise but keep SQLAlchemy warnings
+    # visible: they signal the SA 2.0 migration breaks.
+    # Later entries take precedence over earlier ones.
     "ignore::DeprecationWarning",
+    "default::sqlalchemy.exc.SADeprecationWarning",
+    "default::sqlalchemy.exc.SAWarning",
 ]
 addopts = "--ckan-ini test.ini"
 
