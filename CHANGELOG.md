@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+ - Avoid formula inyection [#3](https://github.com/okfn/ckanext-ddfxls/pull/3)
+
 ## Release 0.1.2
 2026-07-09
 

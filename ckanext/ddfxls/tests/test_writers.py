@@ -53,6 +53,18 @@ def test_missing_keys_leave_cell_empty_without_shifting_columns():
     ]
 
 
+def test_formula_values_are_stored_as_text():
+    records = [{'name': '=HYPERLINK("http://evil.example","x")', 'age': '=1+2', 'city': 'Oslo'}]
+    worksheet = openpyxl.load_workbook(BytesIO(_dump(FIELDS, records))).active
+    name_cell, age_cell, city_cell = worksheet[2]
+    # '='-prefixed values must survive byte-identical but never as live formulas
+    assert name_cell.value == '=HYPERLINK("http://evil.example","x")'
+    assert name_cell.data_type == 's'
+    assert age_cell.value == '=1+2'
+    assert age_cell.data_type == 's'
+    assert city_cell.data_type == 's'
+
+
 def test_multiple_write_records_calls_append():
     data = None
     with xlsx_writer(FIELDS) as writer:
