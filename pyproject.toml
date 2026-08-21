@@ -1,6 +1,6 @@
 [project]
 name = "ckanext-ddfxls"
-version = "0.1.2"
+version = "0.1.3"
 description = "A datastore dump format for XLS files"
 readme = "README.md"
 authors = [
